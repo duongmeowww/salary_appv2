@@ -5,6 +5,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_SQLITE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'salaries.db')
 
 
+def _get_database_uri():
+    uri = os.environ.get('SQLALCHEMY_DATABASE_URI') or os.environ.get('DATABASE_URL') or DEFAULT_SQLITE_URI
+    if uri.startswith('postgres://'):
+        uri = uri.replace('postgres://', 'postgresql://', 1)
+    return uri
+
+
 def _int_env(name, default):
     value = os.environ.get(name)
     if not value:
@@ -20,7 +27,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     COMPANY_NAME = os.environ.get('COMPANY_NAME') or 'Công ty May mặc'
     COMPANY_SLOGAN = os.environ.get('COMPANY_SLOGAN') or 'Hệ thống quản lý lương công nhân'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI') or DEFAULT_SQLITE_URI
+    SQLALCHEMY_DATABASE_URI = _get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = _int_env('MAX_CONTENT_LENGTH', 16 * 1024 * 1024)
     PERMANENT_SESSION_LIFETIME = timedelta(days=_int_env('PERMANENT_SESSION_LIFETIME', 7))
