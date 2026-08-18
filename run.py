@@ -2,12 +2,13 @@ import os
 
 from app import create_app, db
 from app.cli import create_admin
-from app.models import Salary, User
+from app.models import Salary, User, ensure_schema_updates
 
 app = create_app()
 
 with app.app_context():
     db.create_all()
+    ensure_schema_updates()
     admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
     create_admin(password=admin_password)
 

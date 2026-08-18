@@ -5,7 +5,45 @@
 <div class="page-header">
     <div>
         <h1>Bảng lương của {{ current_user.full_name or current_user.username }}</h1>
-        <p>Mã nhân viên: {{ current_user.username }} · {{ salaries | length }} kỳ lương đã nhận</p>
+        <p>Mã nhân viên: <strong>{{ current_user.username }}</strong> · {{ salaries | length }} kỳ lương đã nhận</p>
+    </div>
+    <a class="btn btn-outline-primary" href="{{ url_for('main.profile') }}">
+        <i class="bi bi-person-gear me-1"></i>Hồ sơ cá nhân &amp; Đổi mật khẩu
+    </a>
+</div>
+
+<!-- Thẻ thông tin cá nhân nhân viên -->
+<div class="card-soft p-3 mb-4 bg-white">
+    <div class="row g-3 align-items-center">
+        <div class="col-12 col-md-auto d-flex align-items-center gap-3">
+            <div class="profile-avatar-medium">
+                {{ (current_user.full_name or current_user.username)[:1] | upper }}
+            </div>
+            <div>
+                <h5 class="fw-bold mb-0">{{ current_user.full_name or current_user.username }}</h5>
+                <span class="badge bg-primary-subtle text-primary">Mã NV: {{ current_user.username }}</span>
+            </div>
+        </div>
+        <div class="col-12 col-md border-start-md ps-md-4">
+            <div class="row g-2 text-muted small">
+                <div class="col-6 col-lg-3">
+                    <span class="d-block text-dark fw-semibold"><i class="bi bi-building me-1 text-primary"></i>Phòng / Xưởng:</span>
+                    <span>{{ current_user.department or 'Chưa cập nhật' }}</span>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <span class="d-block text-dark fw-semibold"><i class="bi bi-briefcase me-1 text-primary"></i>Chức vụ:</span>
+                    <span>{{ current_user.position or 'Công nhân may' }}</span>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <span class="d-block text-dark fw-semibold"><i class="bi bi-telephone me-1 text-primary"></i>Số điện thoại:</span>
+                    <span>{{ current_user.phone or 'Chưa cập nhật' }}</span>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <span class="d-block text-dark fw-semibold"><i class="bi bi-credit-card me-1 text-primary"></i>TK Ngân hàng:</span>
+                    <span>{{ current_user.bank_account or 'Chưa cập nhật' }} {% if current_user.bank_name %}({{ current_user.bank_name }}){% endif %}</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

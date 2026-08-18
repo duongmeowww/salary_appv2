@@ -52,18 +52,32 @@
 </div>
 
 <div class="row g-3 mt-1">
-    <div class="col-12 col-lg-6">
+    <div class="col-12 col-md-6 col-lg-3">
+        <a class="card-soft action-tile" href="{{ url_for('main.employees_list') }}">
+            <span class="stat-icon"><i class="bi bi-people-fill fs-5"></i></span>
+            <h3>Quản lý nhân viên</h3>
+            <p>Thêm, sửa thông tin nhân viên, cấp lại mật khẩu hoặc xem chi tiết hồ sơ.</p>
+        </a>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
         <a class="card-soft action-tile" href="{{ url_for('main.upload') }}">
             <span class="stat-icon"><i class="bi bi-file-earmark-arrow-up fs-5"></i></span>
             <h3>Tải file Excel lương</h3>
-            <p>Nhập bảng lương theo tháng từ phòng nhân sự. Dữ liệu trùng kỳ sẽ được cập nhật, không tạo bản ghi mới.</p>
+            <p>Nhập bảng lương theo tháng. Tải file mẫu trực tiếp ngay trên trang web.</p>
         </a>
     </div>
-    <div class="col-12 col-lg-6">
+    <div class="col-12 col-md-6 col-lg-3">
         <a class="card-soft action-tile" href="{{ url_for('main.all_salaries') }}">
             <span class="stat-icon"><i class="bi bi-table fs-5"></i></span>
-            <h3>Xem tất cả bảng lương</h3>
-            <p>Tra cứu lương từng nhân viên theo mã hoặc họ tên, xem lịch sử các kỳ lương đã nhập.</p>
+            <h3>Bảng lương tổng hợp</h3>
+            <p>Tra cứu lương từng nhân viên, xem lịch sử và tổng thực nhận theo kỳ.</p>
+        </a>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+        <a class="card-soft action-tile" href="{{ url_for('main.profile') }}">
+            <span class="stat-icon"><i class="bi bi-shield-lock-fill fs-5"></i></span>
+            <h3>Hồ sơ &amp; Đổi mật khẩu</h3>
+            <p>Cập nhật thông tin quản trị viên và đổi mật khẩu bảo mật tài khoản.</p>
         </a>
     </div>
 </div>

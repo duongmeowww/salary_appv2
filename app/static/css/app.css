@@ -323,3 +323,57 @@ a {
     font-size: .87rem;
     margin-top: 3rem;
 }
+
+/* Profile & Employee Avatars & Badges */
+.profile-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy-700), var(--navy-900));
+    color: #fff;
+    font-size: 2.2rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 14px rgba(16, 41, 74, .2);
+}
+
+.profile-avatar-medium {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--navy-700), var(--navy-500));
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+}
+
+.avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--navy-100);
+    color: var(--navy-700);
+    font-weight: 700;
+    font-size: .85rem;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+}
+
+@media (min-width: 768px) {
+    .border-start-md {
+        border-left: 1px solid #e3e8f0;
+    }
+}
+
+.text-navy {
+    color: var(--navy-900);
+}
+
+.dropdown-item:active {
+    background-color: var(--navy-700);
+}

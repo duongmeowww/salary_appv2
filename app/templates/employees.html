@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Quản lý nhân viên{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Quản lý danh sách nhân viên</h1>
+        <p>Tổng cộng {{ pagination.total }} nhân viên trong hệ thống {{ company_name }}.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-navy" href="{{ url_for('main.add_employee') }}">
+            <i class="bi bi-person-plus me-1"></i>Thêm nhân viên mới
+        </a>
+    </div>
+</div>
+
+<!-- Bộ lọc tìm kiếm -->
+<div class="card-soft p-3 mb-4">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-12 col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" class="form-control" placeholder="Tìm theo mã NV, họ tên, SĐT, chức vụ..." value="{{ keyword }}">
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <select name="dept" class="form-select">
+                <option value="">-- Tất cả phòng ban / xưởng --</option>
+                {% for d in departments %}
+                <option value="{{ d }}" {% if dept == d %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-navy flex-grow-1"><i class="bi bi-funnel me-1"></i>Lọc</button>
+            {% if keyword or dept %}
+            <a href="{{ url_for('main.employees_list') }}" class="btn btn-outline-secondary">Xóa lọc</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Bảng danh sách nhân viên -->
+<div class="card-soft">
+    <div class="table-responsive">
+        <table class="table table-modern align-middle">
+            <thead>
+                <tr>
+                    <th>Mã NV</th>
+                    <th>Họ và tên</th>
+                    <th>Phòng ban / Xưởng</th>
+                    <th>Chức vụ</th>
+                    <th>Số điện thoại</th>
+                    <th>Tài khoản NH</th>
+                    <th class="text-center">Kỳ lương</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td><span class="badge bg-light text-dark border fw-bold">{{ emp.username }}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="avatar-small">{{ (emp.full_name or emp.username)[:1] | upper }}</span>
+                            <span class="fw-semibold">{{ emp.full_name or '—' }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if emp.department %}
+                            <span class="badge bg-info-subtle text-info-emphasis">{{ emp.department }}</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ emp.position or '—' }}</td>
+                    <td>{{ emp.phone or '—' }}</td>
+                    <td>
+                        {% if emp.bank_account %}
+                            <span>{{ emp.bank_account }}</span>
+                            <small class="text-muted d-block">{{ emp.bank_name or '' }}</small>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ emp.salaries | length }} kỳ</span>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('main.edit_employee', user_id=emp.id) }}" class="btn btn-outline-primary" title="Sửa thông tin">
+                                <i class="bi bi-pencil-square"></i> Sửa
+                            </a>
+                            <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#resetModal{{ emp.id }}" title="Đặt lại mật khẩu">
+                                <i class="bi bi-key"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ emp.id }}" title="Xóa nhân viên">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+
+                        <!-- Modal Reset Password -->
+                        <div class="modal fade text-start" id="resetModal{{ emp.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <form method="POST" action="{{ url_for('main.reset_employee_password', user_id=emp.id) }}">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title"><i class="bi bi-key me-2 text-warning"></i>Đặt lại mật khẩu cho {{ emp.full_name }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Nhân viên: <strong>{{ emp.full_name }}</strong> (Mã NV: <code>{{ emp.username }}</code>)</p>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Mật khẩu mới (Bỏ trống để đặt về mặc định là mã NV):</label>
+                                                <input type="text" name="new_password" class="form-control" placeholder="Mặc định: {{ emp.username }}">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-warning">Xác nhận đặt lại</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Delete Employee -->
+                        <div class="modal fade text-start" id="deleteModal{{ emp.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <form method="POST" action="{{ url_for('main.delete_employee', user_id=emp.id) }}">
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Xác nhận xóa nhân viên</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Bạn có chắc chắn muốn xóa nhân viên <strong>{{ emp.full_name }} ({{ emp.username }})</strong>?</p>
+                                            <div class="alert alert-warning mb-0 small">
+                                                <i class="bi bi-info-circle me-1"></i>Hành động này sẽ xóa vĩnh viễn tài khoản và toàn bộ <strong>{{ emp.salaries | length }}</strong> bản ghi lương liên quan!
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-danger">Xóa nhân viên</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">Không tìm thấy nhân viên nào phù hợp.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Phân trang -->
+    {% if pagination.pages > 1 %}
+    <div class="d-flex justify-content-between align-items-center p-3 border-top">
+        <small class="text-muted">Trang {{ pagination.page }} / {{ pagination.pages }}</small>
+        <ul class="pagination pagination-sm mb-0">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.employees_list', page=pagination.prev_num, q=keyword, dept=dept) }}">&laquo; Trước</a>
+            </li>
+            {% endif %}
+            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.employees_list', page=p, q=keyword, dept=dept) }}">{{ p }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+            {% endfor %}
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.employees_list', page=pagination.next_num, q=keyword, dept=dept) }}">Sau &raquo;</a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

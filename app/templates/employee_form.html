@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{% if is_edit %}Chỉnh sửa nhân viên{% else %}Thêm nhân viên mới{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{% if is_edit %}Chỉnh sửa thông tin nhân viên{% else %}Thêm nhân viên mới{% endif %}</h1>
+        <p>{% if is_edit %}Mã nhân viên: {{ employee.username }} · {{ employee.full_name }}{% else %}Nhập thông tin nhân viên mới vào hệ thống.{% endif %}</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.employees_list') }}">
+        <i class="bi bi-arrow-left me-1"></i>Danh sách nhân viên
+    </a>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card-soft p-4">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                {% if is_edit %}
+                <input type="hidden" name="action" value="update_info">
+                {% endif %}
+
+                <h5 class="fw-bold mb-3 text-navy"><i class="bi bi-person-lines-fill me-2"></i>Thông tin cơ bản</h5>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        {{ form.username.label(class="form-label fw-semibold") }}
+                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), placeholder="VD: NV001") }}
+                        {% for error in form.username.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        {{ form.full_name.label(class="form-label fw-semibold") }}
+                        {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else ""), placeholder="VD: Nguyễn Văn An") }}
+                        {% for error in form.full_name.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        {{ form.department.label(class="form-label fw-semibold") }}
+                        {{ form.department(class="form-control", placeholder="VD: Chuyền may 1, Tổ Cắt...") }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        {{ form.position.label(class="form-label fw-semibold") }}
+                        {{ form.position(class="form-control", placeholder="VD: Công nhân may, Tổ trưởng...") }}
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h5 class="fw-bold mb-3 text-navy"><i class="bi bi-telephone-outbound me-2"></i>Liên hệ &amp; Ngân hàng</h5>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        {{ form.phone.label(class="form-label fw-semibold") }}
+                        {{ form.phone(class="form-control", placeholder="VD: 0912345678") }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        {{ form.email.label(class="form-label fw-semibold") }}
+                        {{ form.email(class="form-control", placeholder="VD: nhanvien@congty.com") }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        {{ form.bank_name.label(class="form-label fw-semibold") }}
+                        {{ form.bank_name(class="form-control", placeholder="VD: Vietcombank, MB Bank...") }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        {{ form.bank_account.label(class="form-label fw-semibold") }}
+                        {{ form.bank_account(class="form-control", placeholder="VD: 10123456789") }}
+                    </div>
+                </div>
+
+                {% if not is_edit %}
+                <hr class="my-4">
+                <h5 class="fw-bold mb-3 text-navy"><i class="bi bi-key me-2"></i>Mật khẩu ban đầu</h5>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        {{ form.password.label(class="form-label fw-semibold") }}
+                        {{ form.password(class="form-control", placeholder="Bỏ trống sẽ lấy mã NV làm mật khẩu") }}
+                        <div class="form-text">Nhân viên có thể tự đổi mật khẩu sau khi đăng nhập.</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                    <a href="{{ url_for('main.employees_list') }}" class="btn btn-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-navy px-4">
+                        <i class="bi bi-check-lg me-1"></i>{% if is_edit %}Lưu thay đổi{% else %}Tạo nhân viên{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

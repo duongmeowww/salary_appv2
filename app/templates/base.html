@@ -42,6 +42,12 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'main.employees_list' or request.endpoint == 'main.add_employee' or request.endpoint == 'main.edit_employee' %}active{% endif %}"
+                                   href="{{ url_for('main.employees_list') }}">
+                                    <i class="bi bi-people me-1"></i>Nhân viên
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'main.all_salaries' %}active{% endif %}"
                                    href="{{ url_for('main.all_salaries') }}">
                                     <i class="bi bi-table me-1"></i>Bảng lương
@@ -61,16 +67,36 @@
                                 </a>
                             </li>
                         {% endif %}
-                        <li class="nav-item ms-lg-2 my-2 my-lg-0">
-                            <span class="user-chip">
+                        <li class="nav-item dropdown ms-lg-2 my-2 my-lg-0">
+                            <a class="user-chip text-decoration-none dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <span class="avatar">{{ (current_user.full_name or current_user.username)[:1] | upper }}</span>
-                                {{ current_user.full_name or current_user.username }}
-                            </span>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.logout') }}">
-                                <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
+                                <span>{{ current_user.full_name or current_user.username }}</span>
                             </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                                <li>
+                                    <h6 class="dropdown-header text-truncate" style="max-width: 220px;">
+                                        <strong>{{ current_user.full_name or current_user.username }}</strong><br>
+                                        <small class="text-muted">Mã NV: {{ current_user.username }}</small>
+                                    </h6>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{{ url_for('main.profile') }}">
+                                        <i class="bi bi-person-gear me-2 text-primary"></i>Hồ sơ cá nhân
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="{{ url_for('main.profile') }}">
+                                        <i class="bi bi-shield-lock me-2 text-warning"></i>Đổi mật khẩu
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item py-2 text-danger" href="{{ url_for('main.logout') }}">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     {% endif %}
                 </ul>

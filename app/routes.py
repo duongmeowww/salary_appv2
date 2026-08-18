@@ -1,14 +1,14 @@
 from functools import wraps
 
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, send_file, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import func, or_
 from sqlalchemy.orm import selectinload
 
 from . import db
-from .forms import LoginForm, UploadForm
+from .forms import AdminEmployeeForm, AdminResetPasswordForm, ChangePasswordForm, LoginForm, ProfileForm, UploadForm
 from .models import Salary, User
-from .utils import parse_salary_excel
+from .utils import generate_sample_excel_stream, parse_salary_excel
 
 bp = Blueprint('main', __name__)
 
@@ -105,12 +105,32 @@ def _save_records(records):
     for record in records:
         user = users.get(record['username'])
         if user is None:
-            user = User(username=record['username'], full_name=record['full_name'], is_admin=False)
+            user = User(
+                username=record['username'],
+                full_name=record['full_name'],
+                is_admin=False,
+                department=record.get('department'),
+                position=record.get('position'),
+                phone=record.get('phone'),
+                bank_name=record.get('bank_name'),
+                bank_account=record.get('bank_account'),
+            )
             user.set_password(record['username'])
             db.session.add(user)
             users[user.username] = user
-        elif record['full_name']:
-            user.full_name = record['full_name']
+        else:
+            if record.get('full_name'):
+                user.full_name = record['full_name']
+            if record.get('department'):
+                user.department = record['department']
+            if record.get('position'):
+                user.position = record['position']
+            if record.get('phone'):
+                user.phone = record['phone']
+            if record.get('bank_name'):
+                user.bank_name = record['bank_name']
+            if record.get('bank_account'):
+                user.bank_account = record['bank_account']
 
     db.session.flush()
 
@@ -206,3 +226,196 @@ def all_salaries():
         users=pagination.items,
         keyword=keyword,
     )
+
+
+@bp.route('/download-template')
+@login_required
+def download_template():
+    stream = generate_sample_excel_stream()
+    return send_file(
+        stream,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='bang_luong_mau.xlsx',
+    )
+
+
+@bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    profile_form = ProfileForm(obj=current_user)
+    password_form = ChangePasswordForm()
+
+    action = request.form.get('action')
+
+    if action == 'update_profile' and profile_form.validate_on_submit():
+        if current_user.is_admin and profile_form.full_name.data:
+            current_user.full_name = profile_form.full_name.data.strip()
+        current_user.phone = (profile_form.phone.data or '').strip()
+        current_user.email = (profile_form.email.data or '').strip()
+        if current_user.is_admin:
+            current_user.department = (profile_form.department.data or '').strip()
+            current_user.position = (profile_form.position.data or '').strip()
+        current_user.bank_name = (profile_form.bank_name.data or '').strip()
+        current_user.bank_account = (profile_form.bank_account.data or '').strip()
+        db.session.commit()
+        flash('Cập nhật thông tin cá nhân thành công!', 'success')
+        return redirect(url_for('main.profile'))
+
+    if action == 'change_password' and password_form.validate_on_submit():
+        if not current_user.check_password(password_form.current_password.data):
+            flash('Mật khẩu hiện tại không chính xác.', 'danger')
+        else:
+            current_user.set_password(password_form.new_password.data)
+            db.session.commit()
+            flash('Đổi mật khẩu thành công!', 'success')
+            return redirect(url_for('main.profile'))
+
+    return render_template(
+        'profile.html',
+        profile_form=profile_form,
+        password_form=password_form,
+    )
+
+
+@bp.route('/admin/employees')
+@admin_required
+def employees_list():
+    page = request.args.get('page', 1, type=int)
+    keyword = (request.args.get('q') or '').strip()
+    dept = (request.args.get('dept') or '').strip()
+
+    query = User.query.filter_by(is_admin=False)
+    if keyword:
+        pattern = f'%{keyword}%'
+        query = query.filter(
+            or_(
+                User.username.ilike(pattern),
+                User.full_name.ilike(pattern),
+                User.phone.ilike(pattern),
+                User.department.ilike(pattern),
+                User.position.ilike(pattern),
+            )
+        )
+    if dept:
+        query = query.filter(User.department == dept)
+
+    departments = [
+        d[0] for d in db.session.query(User.department).filter(
+            User.is_admin == False, User.department.isnot(None), User.department != ''
+        ).distinct().all()
+    ]
+
+    pagination = (
+        query
+        .options(selectinload(User.salaries))
+        .order_by(User.username)
+        .paginate(page=page, per_page=EMPLOYEES_PER_PAGE, error_out=False)
+    )
+
+    return render_template(
+        'employees.html',
+        pagination=pagination,
+        employees=pagination.items,
+        keyword=keyword,
+        dept=dept,
+        departments=departments,
+    )
+
+
+@bp.route('/admin/employees/add', methods=['GET', 'POST'])
+@admin_required
+def add_employee():
+    form = AdminEmployeeForm()
+    if form.validate_on_submit():
+        username = form.username.data.strip()
+        existing = User.query.filter_by(username=username).first()
+        if existing:
+            flash(f'Mã nhân viên "{username}" đã tồn tại trong hệ thống!', 'danger')
+            return render_template('employee_form.html', form=form, is_edit=False)
+
+        user = User(
+            username=username,
+            full_name=form.full_name.data.strip(),
+            department=(form.department.data or '').strip(),
+            position=(form.position.data or '').strip(),
+            phone=(form.phone.data or '').strip(),
+            email=(form.email.data or '').strip(),
+            bank_name=(form.bank_name.data or '').strip(),
+            bank_account=(form.bank_account.data or '').strip(),
+            is_admin=False,
+        )
+        password = form.password.data.strip() if form.password.data else username
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        flash(f'Thêm nhân viên "{user.full_name}" ({user.username}) thành công!', 'success')
+        return redirect(url_for('main.employees_list'))
+
+    return render_template('employee_form.html', form=form, is_edit=False)
+
+
+@bp.route('/admin/employees/<int:user_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_employee(user_id):
+    employee = db.session.get(User, user_id)
+    if not employee or employee.is_admin:
+        abort(404)
+
+    form = AdminEmployeeForm(obj=employee)
+    reset_form = AdminResetPasswordForm()
+
+    if request.method == 'POST' and request.form.get('action') == 'update_info':
+        if form.validate_on_submit():
+            # Check if username changed and clashes
+            new_username = form.username.data.strip()
+            if new_username != employee.username:
+                clash = User.query.filter_by(username=new_username).first()
+                if clash:
+                    flash(f'Mã nhân viên "{new_username}" đã tồn tại!', 'danger')
+                    return render_template('employee_form.html', form=form, reset_form=reset_form, is_edit=True, employee=employee)
+                employee.username = new_username
+
+            employee.full_name = form.full_name.data.strip()
+            employee.department = (form.department.data or '').strip()
+            employee.position = (form.position.data or '').strip()
+            employee.phone = (form.phone.data or '').strip()
+            employee.email = (form.email.data or '').strip()
+            employee.bank_name = (form.bank_name.data or '').strip()
+            employee.bank_account = (form.bank_account.data or '').strip()
+            db.session.commit()
+            flash(f'Đã cập nhật thông tin nhân viên {employee.full_name}!', 'success')
+            return redirect(url_for('main.employees_list'))
+
+    return render_template('employee_form.html', form=form, reset_form=reset_form, is_edit=True, employee=employee)
+
+
+@bp.route('/admin/employees/<int:user_id>/reset-password', methods=['POST'])
+@admin_required
+def reset_employee_password(user_id):
+    employee = db.session.get(User, user_id)
+    if not employee or employee.is_admin:
+        abort(404)
+
+    new_password = (request.form.get('new_password') or '').strip()
+    if not new_password:
+        new_password = employee.username  # Reset về mã NV mặc định
+
+    employee.set_password(new_password)
+    db.session.commit()
+    flash(f'Đã đặt lại mật khẩu cho nhân viên {employee.full_name} ({employee.username}) thành: "{new_password}"', 'success')
+    return redirect(url_for('main.employees_list'))
+
+
+@bp.route('/admin/employees/<int:user_id>/delete', methods=['POST'])
+@admin_required
+def delete_employee(user_id):
+    employee = db.session.get(User, user_id)
+    if not employee or employee.is_admin:
+        abort(404)
+
+    name = employee.full_name or employee.username
+    db.session.delete(employee)
+    db.session.commit()
+    flash(f'Đã xóa nhân viên "{name}" và toàn bộ lịch sử lương liên quan.', 'info')
+    return redirect(url_for('main.employees_list'))
