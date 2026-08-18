@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Lương của tôi{% endblock %}
+{% block content %}
+{% set latest = salaries[0] if salaries else None %}
+<div class="page-header">
+    <div>
+        <h1>Bảng lương của {{ current_user.full_name or current_user.username }}</h1>
+        <p>Mã nhân viên: {{ current_user.username }} · {{ salaries | length }} kỳ lương đã nhận</p>
+    </div>
+</div>
+
+{% if latest %}
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card-soft stat-card">
+            <span class="stat-icon"><i class="bi bi-calendar-check fs-5"></i></span>
+            <div>
+                <p class="stat-label">Kỳ lương mới nhất</p>
+                <p class="stat-value">{{ latest | period }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card-soft stat-card">
+            <span class="stat-icon"><i class="bi bi-wallet2 fs-5"></i></span>
+            <div>
+                <p class="stat-label">Thực nhận kỳ mới nhất</p>
+                <p class="stat-value">{{ latest.net_salary | money }} đ</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card-soft stat-card">
+            <span class="stat-icon"><i class="bi bi-plus-circle fs-5"></i></span>
+            <div>
+                <p class="stat-label">Phụ cấp kỳ mới nhất</p>
+                <p class="stat-value">{{ latest.allowance | money }} đ</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card-soft">
+    <div class="employee-header">
+        <span class="fw-semibold">Lịch sử lương</span>
+        <span class="employee-id">Mọi thắc mắc vui lòng liên hệ phòng nhân sự</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-modern align-middle">
+            <thead>
+                <tr>
+                    <th>Kỳ lương</th>
+                    <th class="text-end">Lương cơ bản</th>
+                    <th class="text-end">Phụ cấp</th>
+                    <th class="text-end">Khấu trừ</th>
+                    <th class="text-end">Thực nhận</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in salaries %}
+                <tr>
+                    <td>{{ s | period }}</td>
+                    <td class="amount">{{ s.basic_salary | money }}</td>
+                    <td class="amount">{{ s.allowance | money }}</td>
+                    <td class="amount text-danger">-{{ s.deduction | money }}</td>
+                    <td class="amount amount-net">{{ s.net_salary | money }} đ</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Chưa có dữ liệu lương.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

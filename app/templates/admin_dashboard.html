@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Tổng quan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Tổng quan nhân sự &amp; tiền lương</h1>
+        <p>Theo dõi nhanh tình hình lương của {{ company_name }}.</p>
+    </div>
+    <a class="btn btn-navy" href="{{ url_for('main.upload') }}">
+        <i class="bi bi-cloud-arrow-up me-1"></i>Tải bảng lương mới
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card-soft stat-card">
+            <span class="stat-icon"><i class="bi bi-people fs-5"></i></span>
+            <div>
+                <p class="stat-label">Nhân viên</p>
+                <p class="stat-value">{{ employee_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card-soft stat-card">
+            <span class="stat-icon"><i class="bi bi-journal-text fs-5"></i></span>
+            <div>
+                <p class="stat-label">Bản ghi lương</p>
+                <p class="stat-value">{{ salary_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card-soft stat-card">
+            <span class="stat-icon"><i class="bi bi-calendar-check fs-5"></i></span>
+            <div>
+                <p class="stat-label">Kỳ lương mới nhất</p>
+                <p class="stat-value">{{ period_label or '—' }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card-soft stat-card">
+            <span class="stat-icon"><i class="bi bi-cash-coin fs-5"></i></span>
+            <div>
+                <p class="stat-label">Tổng thực nhận kỳ này</p>
+                <p class="stat-value">{{ period_total | money }} đ</p>
+                <small class="text-muted">{{ period_employees }} nhân viên</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-12 col-lg-6">
+        <a class="card-soft action-tile" href="{{ url_for('main.upload') }}">
+            <span class="stat-icon"><i class="bi bi-file-earmark-arrow-up fs-5"></i></span>
+            <h3>Tải file Excel lương</h3>
+            <p>Nhập bảng lương theo tháng từ phòng nhân sự. Dữ liệu trùng kỳ sẽ được cập nhật, không tạo bản ghi mới.</p>
+        </a>
+    </div>
+    <div class="col-12 col-lg-6">
+        <a class="card-soft action-tile" href="{{ url_for('main.all_salaries') }}">
+            <span class="stat-icon"><i class="bi bi-table fs-5"></i></span>
+            <h3>Xem tất cả bảng lương</h3>
+            <p>Tra cứu lương từng nhân viên theo mã hoặc họ tên, xem lịch sử các kỳ lương đã nhập.</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

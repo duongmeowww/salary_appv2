@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Đăng nhập{% endblock %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="card-soft auth-card">
+        <div class="row g-0">
+            <div class="col-lg-6 auth-side d-none d-lg-block">
+                <h2>{{ company_name }}</h2>
+                <p class="mb-0 opacity-75">{{ company_slogan }}</p>
+                <ul>
+                    <li><i class="bi bi-shield-check"></i><span>Tra cứu lương cá nhân an toàn, riêng tư</span></li>
+                    <li><i class="bi bi-file-earmark-spreadsheet"></i><span>Nhập bảng lương từ file Excel của phòng nhân sự</span></li>
+                    <li><i class="bi bi-clock-history"></i><span>Lưu lịch sử lương theo từng tháng, từng chuyền</span></li>
+                </ul>
+            </div>
+            <div class="col-lg-6">
+                <div class="p-4 p-lg-5">
+                    <h1 class="h4 fw-bold mb-1">Đăng nhập hệ thống</h1>
+                    <p class="text-muted mb-4">Dùng mã nhân viên được cấp trên thẻ công nhân.</p>
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.username.label(class="form-label fw-semibold") }}
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                {{ form.username(class="form-control form-control-lg", placeholder="VD: NV001", autofocus=true) }}
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            {{ form.password.label(class="form-label fw-semibold") }}
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                {{ form.password(class="form-control form-control-lg", placeholder="Mật khẩu") }}
+                            </div>
+                        </div>
+                        {{ form.submit(class="btn btn-navy btn-lg w-100") }}
+                    </form>
+                    <p class="mt-4 mb-0 text-muted small text-center">
+                        <i class="bi bi-info-circle me-1"></i>Lần đầu đăng nhập, mật khẩu chính là mã nhân viên.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

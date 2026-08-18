@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Tải dữ liệu lương{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Tải file Excel lương</h1>
+        <p>Nhập bảng lương theo kỳ cho công nhân {{ company_name }}.</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.admin_dashboard') }}">
+        <i class="bi bi-arrow-left me-1"></i>Về tổng quan
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-7">
+        <div class="card-soft p-4">
+            <form method="POST" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.file.label(class="form-label fw-semibold") }}
+                    {{ form.file(class="form-control form-control-lg") }}
+                    <div class="form-text">Chấp nhận file .xlsx, tối đa 16MB.</div>
+                </div>
+                {{ form.submit(class="btn btn-navy btn-lg") }}
+            </form>
+        </div>
+    </div>
+    <div class="col-12 col-lg-5">
+        <div class="upload-hint h-100">
+            <div class="fw-semibold mb-2"><i class="bi bi-info-circle me-1"></i>Yêu cầu định dạng file</div>
+            <ul class="mb-2 ps-3">
+                <li>Mã nhân viên</li>
+                <li>Họ tên</li>
+                <li>Tháng, Năm</li>
+                <li>Lương cơ bản, Phụ cấp, Khấu trừ, Lương thực nhận</li>
+            </ul>
+            <div class="small">
+                Nhân viên chưa có trong hệ thống sẽ được tạo tự động với mật khẩu là mã nhân viên.
+                Bản ghi cùng nhân viên và cùng kỳ lương sẽ được cập nhật thay vì tạo mới.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
