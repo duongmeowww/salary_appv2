@@ -13,7 +13,7 @@ def create_admin(username='admin', password=None, full_name='Quản trị viên'
     if user is not None:
         return user, None
 
-    raw_password = password or os.environ.get('ADMIN_PASSWORD') or secrets.token_urlsafe(12)
+    raw_password = password or os.environ.get('ADMIN_PASSWORD') or 'admin123'
     user = User(username=username, full_name=full_name, is_admin=True)
     user.set_password(raw_password)
     db.session.add(user)

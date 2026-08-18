@@ -1,9 +1,15 @@
 import os
 
 from app import create_app, db
+from app.cli import create_admin
 from app.models import Salary, User
 
 app = create_app()
+
+with app.app_context():
+    db.create_all()
+    admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
+    create_admin(password=admin_password)
 
 
 @app.shell_context_processor
@@ -12,9 +18,6 @@ def make_shell_context():
 
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-
     app.run(
         debug=app.config['DEBUG'],
         host=os.environ.get('FLASK_HOST', '127.0.0.1'),
