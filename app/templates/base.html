@@ -10,6 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"
           integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    {% block head %}{% endblock %}
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
@@ -86,7 +87,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item py-2" href="{{ url_for('main.profile') }}">
+                                    <a class="dropdown-item py-2" href="{{ url_for('main.profile') }}#doi-mat-khau">
                                         <i class="bi bi-shield-lock me-2 text-warning"></i>Đổi mật khẩu
                                     </a>
                                 </li>
@@ -119,11 +120,14 @@
     <footer class="app-footer">
         <div class="container d-flex flex-wrap justify-content-between gap-2">
             <span>&copy; {{ current_year }} {{ company_name }}</span>
-            <span>{{ company_slogan }}</span>
+            <span class="d-inline-flex align-items-center gap-2">
+                <i class="bi bi-shield-check"></i>{{ company_slogan }}
+            </span>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous" defer></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

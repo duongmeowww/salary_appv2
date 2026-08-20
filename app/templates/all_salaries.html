@@ -4,18 +4,41 @@
 <div class="page-header">
     <div>
         <h1>Bảng lương nhân viên</h1>
-        <p>{{ pagination.total }} nhân viên{% if keyword %} khớp với “{{ keyword }}”{% endif %}.</p>
+        <p>{{ pagination.total }} nhân viên{% if keyword %} khớp với “{{ keyword }}”{% endif %}{% if period %} · kỳ lương {{ period }}{% endif %}.</p>
     </div>
-    <form class="d-flex gap-2" method="GET" role="search">
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="search" class="form-control" name="q" value="{{ keyword }}"
-                   placeholder="Tìm theo mã hoặc họ tên" aria-label="Tìm nhân viên">
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" href="{{ url_for('main.export_salaries', q=keyword or None, period=period or None) }}">
+            <i class="bi bi-file-earmark-excel me-1"></i>Xuất Excel
+        </a>
+    </div>
+</div>
+
+<!-- Bộ lọc -->
+<div class="filter-bar mb-4">
+    <form class="row g-2 align-items-center" method="GET">
+        <div class="col-12 col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" name="q" value="{{ keyword }}"
+                       placeholder="Tìm theo mã hoặc họ tên" aria-label="Tìm nhân viên">
+            </div>
         </div>
-        <button class="btn btn-navy" type="submit">Tìm</button>
-        {% if keyword %}
-        <a class="btn btn-outline-secondary" href="{{ url_for('main.all_salaries') }}">Xoá</a>
-        {% endif %}
+        <div class="col-12 col-md-3">
+            <select name="period" class="form-select" aria-label="Lọc theo kỳ lương">
+                <option value="">-- Tất cả kỳ lương --</option>
+                {% for year, month in periods %}
+                <option value="{{ '%04d-%02d' | format(year, month) }}" {% if period == '%04d-%02d' | format(year, month) %}selected{% endif %}>
+                    Tháng {{ '%02d' | format(month) }}/{{ year }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 col-md-4 d-flex gap-2">
+            <button class="btn btn-navy flex-grow-1" type="submit"><i class="bi bi-funnel me-1"></i>Lọc</button>
+            {% if keyword or period %}
+            <a class="btn btn-outline-secondary" href="{{ url_for('main.all_salaries') }}">Xoá</a>
+            {% endif %}
+        </div>
     </form>
 </div>
 
@@ -26,7 +49,7 @@
             <span class="avatar">{{ (user.full_name or user.username)[:1] | upper }}</span>
             <div>
                 <div class="fw-semibold">{{ user.full_name or 'Chưa có tên' }}</div>
-                <div class="employee-id">Mã nhân viên: {{ user.username }}</div>
+                <div class="employee-id">Mã nhân viên: {{ user.username }}{% if user.department %} · {{ user.department }}{% endif %}</div>
             </div>
         </div>
         <span class="badge text-bg-light border">{{ user.salaries | length }} kỳ lương</span>
@@ -57,12 +80,22 @@
             </tbody>
         </table>
     </div>
+    <div class="text-end p-2 border-top bg-light bg-opacity-50">
+        <a class="btn btn-sm btn-outline-navy" href="{{ url_for('main.employee_salary_detail', user_id=user.id) }}">
+            <i class="bi bi-eye me-1"></i>Xem chi tiết &amp; in lương
+        </a>
+    </div>
 </div>
 {% else %}
-<div class="card-soft text-center py-5">
-    <i class="bi bi-people fs-1 text-secondary"></i>
-    <p class="mt-3 mb-0 text-muted">
-        {% if keyword %}Không tìm thấy nhân viên nào phù hợp.{% else %}Chưa có nhân viên nào. Hãy tải file Excel lương lên.{% endif %}
+<div class="card-soft empty-state">
+    <i class="bi bi-people"></i>
+    <h6>{% if keyword or period %}Không tìm thấy kết quả phù hợp{% else %}Chưa có dữ liệu{% endif %}</h6>
+    <p>
+        {% if keyword or period %}
+            Hãy thử xoá bộ lọc hoặc tìm với từ khoá khác.
+        {% else %}
+            Chưa có nhân viên nào. Hãy tải file Excel lương lên.
+        {% endif %}
     </p>
 </div>
 {% endfor %}
@@ -71,11 +104,11 @@
 <nav class="mt-4">
     <ul class="pagination justify-content-center">
         <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('main.all_salaries', page=pagination.prev_num, q=keyword or None) }}">Trước</a>
+            <a class="page-link" href="{{ url_for('main.all_salaries', page=pagination.prev_num, q=keyword or None, period=period or None) }}">Trước</a>
         </li>
         <li class="page-item disabled"><span class="page-link">{{ pagination.page }} / {{ pagination.pages }}</span></li>
         <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for('main.all_salaries', page=pagination.next_num, q=keyword or None) }}">Sau</a>
+            <a class="page-link" href="{{ url_for('main.all_salaries', page=pagination.next_num, q=keyword or None, period=period or None) }}">Sau</a>
         </li>
     </ul>
 </nav>

@@ -23,10 +23,51 @@ OPTIONAL_COLUMNS = {
 }
 
 
+def _normalize_number_text(value):
+    """Chuẩn hóa chuỗi số tiền kiểu VN (1.234.567, 1,234,567, 12,5, 1 234) về dạng float-compatible."""
+    text = str(value).strip()
+    text = text.replace(' ', ' ').replace('đ', '').replace('₫', '').replace('$', '').strip()
+    text = text.replace(' ', '')
+
+    if ',' in text and '.' in text:
+        # Có cả 2 dấu → dấu đứng sau là dấu thập phân, dấu trước là phân cách hàng nghìn
+        if text.rfind(',') > text.rfind('.'):
+            text = text.replace('.', '').replace(',', '.')   # 1.234,56 -> 1234.56
+        else:
+            text = text.replace(',', '')   # 1,234.56 -> 1234.56
+    elif ',' in text:
+        last = text.rsplit(',', 1)
+        body = last[0].lstrip('-')
+        # Một dấu phẩy duy nhất và sau nó có 1-2 chữ số → dấu thập phân (VD: 12,5, -500,25)
+        if (
+            text.count(',') == 1
+            and len(last) == 2
+            and body.isdigit()
+            and last[1].isdigit()
+            and len(last[1]) <= 2
+        ):
+            text = text.replace(',', '.')
+        else:
+            text = text.replace(',', '')   # 1,234,567 -> 1234567
+    elif '.' in text:
+        parts = text.split('.')
+        # Nhiều dấu chấm hoặc 1 dấu chấm với 3 số sau → phân cách hàng nghìn
+        if len(parts) > 2:
+            text = text.replace('.', '')   # 1.234.567 -> 1234567
+        elif len(parts) == 2 and parts[1].isdigit() and len(parts[1]) == 3 and parts[0].isdigit():
+            text = text.replace('.', '')   # 1.234 -> 1234
+    return text
+
+
 def _to_float(value, column, row_number):
-    if value is None or value == '':
+    if value is None:
         return 0.0
     try:
+        if isinstance(value, str):
+            text = value.strip()
+            if text == '':
+                return 0.0
+            return float(_normalize_number_text(text))
         return float(value)
     except (TypeError, ValueError):
         raise ValueError(f'Dòng {row_number}: cột "{column}" phải là số, nhận được "{value}".')
@@ -174,6 +215,85 @@ def generate_sample_excel_stream():
     col_widths = {
         'A': 15, 'B': 22, 'C': 10, 'D': 10, 'E': 15,
         'F': 14, 'G': 14, 'H': 18, 'I': 18, 'J': 18, 'K': 16
+    }
+    for col_letter, width in col_widths.items():
+        ws.column_dimensions[col_letter].width = width
+
+    stream = io.BytesIO()
+    wb.save(stream)
+    stream.seek(0)
+    return stream
+
+
+def generate_salaries_excel(rows):
+    """Xuất danh sách bản ghi lương ra file Excel.
+
+    rows: danh sách dict gồm username, full_name, department, position, month,
+          year, basic_salary, allowance, deduction, net_salary
+    """
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'BangLuong'
+
+    headers = [
+        'Mã nhân viên',
+        'Họ tên',
+        'Tháng',
+        'Năm',
+        'Phòng ban',
+        'Chức vụ',
+        'Lương cơ bản',
+        'Phụ cấp',
+        'Khấu trừ',
+        'Lương thực nhận',
+    ]
+    ws.append(headers)
+
+    header_fill = PatternFill(start_color='10294A', end_color='10294A', fill_type='solid')
+    header_font = Font(name='Arial', size=11, bold=True, color='FFFFFF')
+    thin_border = Border(
+        left=Side(style='thin', color='D0D7DE'),
+        right=Side(style='thin', color='D0D7DE'),
+        top=Side(style='thin', color='D0D7DE'),
+        bottom=Side(style='thin', color='D0D7DE'),
+    )
+
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = thin_border
+    ws.row_dimensions[1].height = 28
+
+    data_font = Font(name='Arial', size=10)
+    for index, record in enumerate(rows, start=2):
+        ws.append([
+            record.get('username', ''),
+            record.get('full_name', ''),
+            record.get('month', ''),
+            record.get('year', ''),
+            record.get('department', ''),
+            record.get('position', ''),
+            record.get('basic_salary', 0),
+            record.get('allowance', 0),
+            record.get('deduction', 0),
+            record.get('net_salary', 0),
+        ])
+        ws.row_dimensions[index].height = 22
+        for col_idx, cell in enumerate(ws[index], start=0):
+            cell.font = data_font
+            cell.border = thin_border
+            if col_idx in (0, 2, 3):
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+            elif col_idx in (1, 4, 5):
+                cell.alignment = Alignment(horizontal='left', vertical='center')
+            else:
+                cell.alignment = Alignment(horizontal='right', vertical='center')
+                cell.number_format = '#,##0'
+
+    col_widths = {
+        'A': 15, 'B': 22, 'C': 10, 'D': 10, 'E': 18,
+        'F': 18, 'G': 15, 'H': 14, 'I': 14, 'J': 18,
     }
     for col_letter, width in col_widths.items():
         ws.column_dimensions[col_letter].width = width

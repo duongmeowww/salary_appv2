@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 from . import db
 from .forms import AdminEmployeeForm, AdminResetPasswordForm, ChangePasswordForm, LoginForm, ProfileForm, UploadForm
 from .models import Salary, User
-from .utils import generate_sample_excel_stream, parse_salary_excel
+from .utils import generate_sample_excel_stream, generate_salaries_excel, parse_salary_excel
 
 bp = Blueprint('main', __name__)
 
@@ -61,6 +61,18 @@ def logout():
     return redirect(url_for('main.login'))
 
 
+def _available_periods(limit=None):
+    """Trả về danh sách (year, month) các kỳ lương đang có, mới nhất trước."""
+    query = (
+        db.session.query(Salary.year, Salary.month)
+        .distinct()
+        .order_by(Salary.year.desc(), Salary.month.desc())
+    )
+    if limit:
+        query = query.limit(limit)
+    return query.all()
+
+
 @bp.route('/admin')
 @admin_required
 def admin_dashboard():
@@ -75,6 +87,7 @@ def admin_dashboard():
     period_label = None
     period_total = 0
     period_employees = 0
+    avg_net = 0
     if latest_period is not None:
         year, month = latest_period
         period_label = 'Tháng {:02d}/{}'.format(month, year)
@@ -83,6 +96,23 @@ def admin_dashboard():
             .filter(Salary.year == year, Salary.month == month)
             .one()
         )
+        if period_employees:
+            avg_net = period_total / period_employees
+
+    # Dữ liệu biểu đồ xu hướng 12 kỳ gần nhất
+    chart_labels = []
+    chart_totals = []
+    chart_counts = []
+    trend_periods = _available_periods(12)
+    for year, month in reversed(trend_periods):
+        total, count = (
+            db.session.query(func.coalesce(func.sum(Salary.net_salary), 0), func.count(Salary.id))
+            .filter(Salary.year == year, Salary.month == month)
+            .one()
+        )
+        chart_labels.append('Tháng {:02d}/{}'.format(month, year))
+        chart_totals.append(round(total))
+        chart_counts.append(count)
 
     return render_template(
         'admin_dashboard.html',
@@ -91,6 +121,10 @@ def admin_dashboard():
         period_label=period_label,
         period_total=period_total,
         period_employees=period_employees,
+        avg_net=round(avg_net),
+        chart_labels=chart_labels,
+        chart_totals=chart_totals,
+        chart_counts=chart_counts,
     )
 
 
@@ -206,11 +240,27 @@ def employee_salary():
 def all_salaries():
     page = request.args.get('page', 1, type=int)
     keyword = (request.args.get('q') or '').strip()
+    period = (request.args.get('period') or '').strip()  # dạng "YYYY-MM" hoặc "YYYY-MM-ALL"
 
     query = User.query.filter_by(is_admin=False)
     if keyword:
         pattern = f'%{keyword}%'
         query = query.filter(or_(User.username.ilike(pattern), User.full_name.ilike(pattern)))
+
+    # Lọc theo kỳ lương: lấy nhân viên có bản ghi trong kỳ được chọn
+    if period:
+        try:
+            year_part, month_part = (period.split('-') + [None, None])[:2]
+            year = int(year_part)
+            month = int(month_part) if month_part else None
+        except (ValueError, TypeError):
+            year = None
+            month = None
+        if year:
+            employee_ids = db.session.query(Salary.employee_id).filter(Salary.year == year)
+            if month:
+                employee_ids = employee_ids.filter(Salary.month == month)
+            query = query.filter(User.id.in_(employee_ids))
 
     pagination = (
         query
@@ -220,11 +270,15 @@ def all_salaries():
     )
     if page > 1 and not pagination.items:
         abort(404)
+
+    periods = _available_periods()
     return render_template(
         'all_salaries.html',
         pagination=pagination,
         users=pagination.items,
         keyword=keyword,
+        period=period,
+        periods=periods,
     )
 
 
@@ -237,6 +291,80 @@ def download_template():
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True,
         download_name='bang_luong_mau.xlsx',
+    )
+
+
+@bp.route('/admin/all-salaries/export')
+@admin_required
+def export_salaries():
+    keyword = (request.args.get('q') or '').strip()
+    period = (request.args.get('period') or '').strip()
+
+    query = Salary.query.join(User).filter(User.is_admin == False)
+    if keyword:
+        pattern = f'%{keyword}%'
+        query = query.filter(or_(User.username.ilike(pattern), User.full_name.ilike(pattern)))
+    if period:
+        try:
+            year_part, month_part = (period.split('-') + [None, None])[:2]
+            year = int(year_part)
+            month = int(month_part) if month_part else None
+        except (ValueError, TypeError):
+            year = None
+            month = None
+        if year:
+            query = query.filter(Salary.year == year)
+            if month:
+                query = query.filter(Salary.month == month)
+
+    rows = query.order_by(Salary.year.desc(), Salary.month.desc(), User.username).all()
+    export_rows = [
+        {
+            'username': salary.employee.username if salary.employee else '',
+            'full_name': salary.employee.full_name if salary.employee else '',
+            'department': salary.employee.department if salary.employee else '',
+            'position': salary.employee.position if salary.employee else '',
+            'month': salary.month,
+            'year': salary.year,
+            'basic_salary': salary.basic_salary,
+            'allowance': salary.allowance,
+            'deduction': salary.deduction,
+            'net_salary': salary.net_salary,
+        }
+        for salary in rows
+    ]
+
+    stream = generate_salaries_excel(export_rows)
+    name = 'bang_luong'
+    if period:
+        name += '_' + period
+    return send_file(
+        stream,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'{name}.xlsx',
+    )
+
+
+@bp.route('/admin/employees/<int:user_id>/salary')
+@admin_required
+def employee_salary_detail(user_id):
+    employee = db.session.get(User, user_id)
+    if not employee or employee.is_admin:
+        abort(404)
+
+    salaries = (
+        Salary.query
+        .filter_by(employee_id=employee.id)
+        .order_by(Salary.year.desc(), Salary.month.desc())
+        .all()
+    )
+    total_net = sum(s.net_salary or 0 for s in salaries)
+    return render_template(
+        'employee_salary_detail.html',
+        employee=employee,
+        salaries=salaries,
+        total_net=total_net,
     )
 
 

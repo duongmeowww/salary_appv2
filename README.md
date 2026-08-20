@@ -5,9 +5,11 @@
 ## Tính Năng
 
 - 🔐 **Xác Thực**: Đăng nhập an toàn với mã nhân viên
-- 📊 **Dashboard Admin**: Xem tổng quát lương của tất cả nhân viên
-- 👤 **Trang Nhân Viên**: Xem lương cá nhân
-- 📤 **Upload Excel**: Tải file Excel lương lên hệ thống
+- 📊 **Dashboard Admin**: Xem tổng quát lương của tất cả nhân viên, biểu đồ xu hướng 12 kỳ gần nhất
+- 👤 **Trang Nhân Viên**: Xem lương cá nhân, cập nhật hồ sơ, đổi mật khẩu
+- 📤 **Upload Excel**: Kéo-thả file, hỗ trợ định dạng số tiền kiểu VN (8.500.000 / 8,5 / 1 000 000)
+- 📋 **Bảng lương tổng hợp**: Lọc theo từ khoá, lọc theo kỳ lương, **xuất Excel**
+- 👁️ **Chi tiết lương nhân viên**: Xem tổng hợp và **in bảng lương**
 - 💾 **Database**: Lưu trữ dữ liệu an toàn với SQLAlchemy
 
 ## Yêu Cầu
@@ -86,8 +88,13 @@ salary_app/
 │       ├── login.html
 │       ├── admin_dashboard.html
 │       ├── employee_salary.html
+│       ├── employee_salary_detail.html
 │       ├── all_salaries.html
-│       └── upload.html
+│       ├── employees.html
+│       ├── employee_form.html
+│       ├── profile.html
+│       ├── upload.html
+│       └── error.html
 ├── instance/                     # Instance folder (database)
 │   └── salaries.db
 ├── tests/                        # Unit test (pytest)
@@ -119,8 +126,15 @@ Database models:
 Các route của ứng dụng:
 - `/login`: Trang đăng nhập
 - `/admin`: Dashboard admin
-- `/employee`: Trang xem lương nhân viên
-- `/upload`: Trang upload file Excel
+- `/my-salary`: Trang xem lương nhân viên (nhân viên)
+- `/admin/all-salaries`: Bảng lương tổng hợp (admin)
+- `/admin/all-salaries/export`: Xuất bảng lương ra Excel (admin)
+- `/admin/employees`: Quản lý danh sách nhân viên (admin)
+- `/admin/employees/<id>/salary`: Chi tiết + in lương nhân viên (admin)
+- `/admin/employees/add|edit|delete|reset-password`: CRUD nhân viên (admin)
+- `/upload`: Trang upload file Excel (admin)
+- `/profile`: Hồ sơ cá nhân + đổi mật khẩu
+- `/download-template`: Tải file Excel mẫu
 - `/logout`: Đăng xuất
 
 ## Triển Khai lên PythonAnywhere
@@ -186,6 +200,9 @@ File Excel được xử lý bởi hàm `parse_salary_excel()` trong `app/utils.
 từ luồng upload bằng openpyxl, không ghi file tạm lên đĩa). Upload lại cùng một kỳ lương sẽ
 cập nhật bản ghi cũ thay vì tạo bản ghi trùng.
 
+Các cột số tiền chấp nhận nhiều định dạng nhập liệu: `8500000`, `8.500.000`, `8,5` (triệu),
+`8 500 000`, kèm hoặc không kèm chữ "đ".
+
 ## Khắc Phục Sự Cố
 
 ### Lỗi ModuleNotFoundError
@@ -218,11 +235,9 @@ python run.py --port 8000
 
 ## Phát Triển Tiếp
 
-- [ ] Thêm chức năng xuất PDF
-- [ ] Thêm biểu đồ thống kê
-- [ ] Email notification
-- [ ] Role-based access control
-- [ ] Search và filter nâng cao
+- [ ] Xuất phiếu lương dạng PDF cho từng nhân viên
+- [ ] Gửi email thông báo lương
+- [ ] Role-based access control chi tiết hơn
 
 ## Liên Hệ
 

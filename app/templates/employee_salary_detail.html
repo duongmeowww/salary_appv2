@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Chi tiết lương — {{ employee.full_name or employee.username }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Chi tiết lương nhân viên</h1>
+        <p>{{ employee.full_name or 'Chưa có tên' }} · Mã NV: <strong>{{ employee.username }}</strong></p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>In bảng lương
+        </button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('main.all_salaries') }}">
+            <i class="bi bi-arrow-left me-1"></i>Bảng lương
+        </a>
+    </div>
+</div>
+
+<div class="card-soft p-3 p-md-4 mb-4">
+    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+        <div class="profile-avatar-medium">
+            {{ (employee.full_name or employee.username)[:1] | upper }}
+        </div>
+        <div>
+            <h4 class="fw-bold mb-0">{{ employee.full_name or employee.username }}</h4>
+            <span class="badge bg-primary-subtle text-primary">Mã NV: {{ employee.username }}</span>
+            {% if employee.department %}<span class="badge bg-info-subtle text-info-emphasis ms-1">{{ employee.department }}</span>{% endif %}
+            {% if employee.position %}<span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">{{ employee.position }}</span>{% endif %}
+        </div>
+    </div>
+    <div class="summary-strip">
+        <div class="summary-item">
+            <p class="k">Số kỳ lương</p>
+            <p class="v">{{ salaries | length }}</p>
+        </div>
+        <div class="summary-item">
+            <p class="k">Tổng thực nhận</p>
+            <p class="v">{{ total_net | money }} đ</p>
+        </div>
+        <div class="summary-item">
+            <p class="k">Thực nhận gần nhất</p>
+            <p class="v">{{ salaries[0].net_salary | money if salaries else 0 | money }} đ</p>
+        </div>
+        <div class="summary-item">
+            <p class="k">Số điện thoại</p>
+            <p class="v" style="font-size:.95rem">{{ employee.phone or '—' }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="card-soft">
+    <div class="employee-header">
+        <span class="fw-semibold">Lịch sử lương</span>
+        <span class="employee-id">Tổng cộng {{ salaries | length }} kỳ</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-modern align-middle">
+            <thead>
+                <tr>
+                    <th>Kỳ lương</th>
+                    <th class="text-end">Lương cơ bản</th>
+                    <th class="text-end">Phụ cấp</th>
+                    <th class="text-end">Khấu trừ</th>
+                    <th class="text-end">Thực nhận</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in salaries %}
+                <tr>
+                    <td>{{ s | period }}</td>
+                    <td class="amount">{{ s.basic_salary | money }}</td>
+                    <td class="amount">{{ s.allowance | money }}</td>
+                    <td class="amount text-danger">-{{ s.deduction | money }}</td>
+                    <td class="amount amount-net">{{ s.net_salary | money }} đ</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Chưa có dữ liệu lương cho nhân viên này.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

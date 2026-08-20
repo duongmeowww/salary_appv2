@@ -87,6 +87,9 @@
                     </td>
                     <td class="text-end">
                         <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('main.employee_salary_detail', user_id=emp.id) }}" class="btn btn-outline-navy" title="Xem chi tiết lương">
+                                <i class="bi bi-cash-coin"></i>
+                            </a>
                             <a href="{{ url_for('main.edit_employee', user_id=emp.id) }}" class="btn btn-outline-primary" title="Sửa thông tin">
                                 <i class="bi bi-pencil-square"></i> Sửa
                             </a>
@@ -103,6 +106,7 @@
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
                                     <form method="POST" action="{{ url_for('main.reset_employee_password', user_id=emp.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <div class="modal-header">
                                             <h5 class="modal-title"><i class="bi bi-key me-2 text-warning"></i>Đặt lại mật khẩu cho {{ emp.full_name }}</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -128,6 +132,7 @@
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
                                     <form method="POST" action="{{ url_for('main.delete_employee', user_id=emp.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <div class="modal-header bg-danger text-white">
                                             <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Xác nhận xóa nhân viên</h5>
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>

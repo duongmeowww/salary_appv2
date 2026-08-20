@@ -1,14 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Tổng quan{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
 {% block content %}
 <div class="page-header">
     <div>
         <h1>Tổng quan nhân sự &amp; tiền lương</h1>
         <p>Theo dõi nhanh tình hình lương của {{ company_name }}.</p>
     </div>
-    <a class="btn btn-navy" href="{{ url_for('main.upload') }}">
-        <i class="bi bi-cloud-arrow-up me-1"></i>Tải bảng lương mới
-    </a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" href="{{ url_for('main.download_template') }}">
+            <i class="bi bi-file-earmark-arrow-down me-1"></i>File mẫu
+        </a>
+        <a class="btn btn-navy" href="{{ url_for('main.upload') }}">
+            <i class="bi bi-cloud-arrow-up me-1"></i>Tải bảng lương mới
+        </a>
+    </div>
 </div>
 
 <div class="row g-3">
@@ -36,6 +44,7 @@
             <div>
                 <p class="stat-label">Kỳ lương mới nhất</p>
                 <p class="stat-value">{{ period_label or '—' }}</p>
+                {% if period_employees %}<small class="text-muted">{{ period_employees }} nhân viên trong kỳ</small>{% endif %}
             </div>
         </div>
     </div>
@@ -45,11 +54,25 @@
             <div>
                 <p class="stat-label">Tổng thực nhận kỳ này</p>
                 <p class="stat-value">{{ period_total | money }} đ</p>
-                <small class="text-muted">{{ period_employees }} nhân viên</small>
+                {% if avg_net %}<small class="text-muted">Bình quân {{ avg_net | money }} đ/NV</small>{% endif %}
             </div>
         </div>
     </div>
 </div>
+
+{% if chart_labels %}
+<div class="card-soft p-3 p-md-4 mt-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-0 text-navy"><i class="bi bi-graph-up-arrow me-2"></i>Xu hướng tổng lương 12 kỳ gần nhất</h5>
+            <small class="text-muted">Tổng lương thực nhận theo từng kỳ đã nhập liệu.</small>
+        </div>
+    </div>
+    <div class="chart-wrap">
+        <canvas id="salaryTrendChart" aria-label="Biểu đồ xu hướng lương" role="img"></canvas>
+    </div>
+</div>
+{% endif %}
 
 <div class="row g-3 mt-1">
     <div class="col-12 col-md-6 col-lg-3">
@@ -70,7 +93,7 @@
         <a class="card-soft action-tile" href="{{ url_for('main.all_salaries') }}">
             <span class="stat-icon"><i class="bi bi-table fs-5"></i></span>
             <h3>Bảng lương tổng hợp</h3>
-            <p>Tra cứu lương từng nhân viên, xem lịch sử và tổng thực nhận theo kỳ.</p>
+            <p>Tra cứu lương từng nhân viên, lọc theo kỳ và xuất Excel.</p>
         </a>
     </div>
     <div class="col-12 col-md-6 col-lg-3">
@@ -81,4 +104,56 @@
         </a>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if chart_labels %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const ctx = document.getElementById('salaryTrendChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_labels | tojson }},
+            datasets: [{
+                label: 'Tổng lương thực nhận (VNĐ)',
+                data: {{ chart_totals | tojson }},
+                backgroundColor: 'rgba(31, 82, 153, 0.75)',
+                borderColor: 'rgba(16, 41, 74, 1)',
+                borderWidth: 1,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (ctx) {
+                            return ' ' + Number(ctx.raw).toLocaleString('vi-VN') + ' đ';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function (value) {
+                            return new Intl.NumberFormat('vi-VN', {
+                                notation: 'compact',
+                                maximumFractionDigits: 1
+                            }).format(value);
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
 {% endblock %}
